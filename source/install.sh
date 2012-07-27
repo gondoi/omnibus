@@ -48,19 +48,47 @@ report_bug() {
   echo "Please detail your operating system type, version and any other relevant details"
 }
 
+hostlist=("http://chef.rckspc.com" "http://s3.amazonaws.com")
+
+pick_host() {
+  index=$RANDOM
+  let "index %= ${#hostlist[@]}"
+  host="${hostlist[$index]}"
+  unset hostlist[$index]
+  hostlist=("${hostlist[@]}")
+}
+
 # Get command line arguments
-while getopts sv: opt
+while getopts sarv: opt
 do
   case "$opt" in
     v)  version="$OPTARG";;
     s)  use_shell=1;;
+    a)  if [ -n "$host" ]; then
+          echo "Host already set to ${host}"
+        else
+          host="${hostlist[1]}"
+          unset hostlist[1]
+          hostlist=("${hostlist[@]}")
+        fi
+        ;;
+    r)  if [ -n "$host" ]; then
+          echo "Host already set to ${host}"
+        else
+          host="${hostlist[0]}"
+          unset hostlist[0]
+          hostlist=("${hostlist[@]}")
+        fi
+        ;;
     \?)   # unknown flag
       echo >&2 \
-      "usage: $0 [-s] [-v version]"
+      "usage: $0 [-s] [-v version] [-r|-a]"
       exit 1;;
   esac
 done
 shift `expr $OPTIND - 1`
+
+test -n "$host" || pick_host
 
 machine=$(echo -e `uname -m`)
 
@@ -179,18 +207,25 @@ fi
 
 echo "Downloading Chef $version for ${platform}..."
 
-url="http://s3.amazonaws.com/opscode-full-stack/$platform-$platform_version-$machine/$filename"
+url="$host/opscode-full-stack/$platform-$platform_version-$machine/$filename"
 
-if exists wget;
-then
-  wget -O /tmp/$filename $url
-elif exists curl;
-then
-  curl $url > /tmp/$filename
-else
-  echo "Cannot find wget or curl - cannot install Chef!"
-  exit 5
-fi
+download_package() {
+  if exists wget;
+  then
+    wget -O /tmp/$filename $1 
+  elif exists curl;
+  then
+    curl $1 > /tmp/$filename
+  else
+    echo "Cannot find wget or curl - cannot install Chef!"
+    return 5
+  fi
+}
+
+while [[ ! $(download_package "$url") && "${#hostlist[@]}" -gt 0 ]]; do
+  pick_host  
+  url="$host/opscode-full-stack/$platform-$platform_version-$machine/$filename"
+done
 
 # Check to see if we got a 404 or an empty file
 grep "does not exist" /tmp/$filename 2>&1 >/dev/null
