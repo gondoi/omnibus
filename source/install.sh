@@ -48,7 +48,7 @@ report_bug() {
   echo "Please detail your operating system type, version and any other relevant details"
 }
 
-hostlist=("http://chef.rckspc.com" "http://s3.amazonaws.com")
+hostlist=("http://chef.rckspc.com" "http://s3.amazonaws.com/opscode-full-stack")
 
 pick_host() {
   index=$RANDOM
@@ -207,7 +207,7 @@ fi
 
 echo "Downloading Chef $version for ${platform}..."
 
-url="$host/opscode-full-stack/$platform-$platform_version-$machine/$filename"
+url="$host/$platform-$platform_version-$machine/$filename"
 
 download_package() {
   if exists wget;
