@@ -222,7 +222,7 @@ download_package() {
   fi
 }
 
-while [[ ! $(download_package "$url") && "${#hostlist[@]}" -gt 0 ]]; do
+while ! $(download_package "$url") && [ "${#hostlist[@]}" -gt 0 ]; do
   pick_host  
   url="$host/$platform-$platform_version-$machine/$filename"
 done
