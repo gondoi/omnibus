@@ -224,7 +224,7 @@ download_package() {
 
 while [[ ! $(download_package "$url") && "${#hostlist[@]}" -gt 0 ]]; do
   pick_host  
-  url="$host/opscode-full-stack/$platform-$platform_version-$machine/$filename"
+  url="$host/$platform-$platform_version-$machine/$filename"
 done
 
 # Check to see if we got a 404 or an empty file
